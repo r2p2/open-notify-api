@@ -1,0 +1,10 @@
+[package]
+name = "open-notify-api"
+version = "0.1.0"
+authors = ["Robert Peters <r2p2.gw@gmail.com>"]
+
+[dependencies]
+serde = "1.0.34"
+serde_json = "1.0"
+serde_derive = "1.0.34"
+reqwest = "0.8.5"
