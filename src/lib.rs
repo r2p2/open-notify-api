@@ -1,5 +1,28 @@
-//! Ruby library to access the web api provided by http://open-notify.org/ (CC BY 3.0 Nathan Bergey).
-
+//! Ruby library to access the web api provided by http://open-notify.org/.
+//!
+//! # Supported
+//!
+//! * Request list of people in space
+//! * Request position of the ISS
+//!
+//! # Open
+//!
+//! * Request ISS pass times given a location
+//!
+//! # Example
+//! ```
+//! match open_notify_api::astros() {
+//!     Ok(astros) => {
+//!         println!("People in space {}", astros.people().len());
+//!         for person in astros.people().iter() {
+//!             println!(" - {}, {}", person.name(), person.craft());
+//!         }
+//!     },
+//!     Err(error_msg) => {
+//!         eprintln!("Ups: {:?}", error_msg);
+//!     }
+//! }
+//! ```
 
 extern crate reqwest;
 extern crate serde;
@@ -10,6 +33,8 @@ extern crate serde_derive;
 
 mod error;
 
+/// People are contained in a separate type `Person`
+/// to add the information in which craft they are in.
 #[derive(Deserialize, Serialize, PartialEq)]
 pub struct Person {
     name: String,
@@ -42,14 +67,31 @@ pub struct Astros {
 }
 
 impl Astros {
+    /// Returns the value of the `message` field.
+    ///
+    /// Since all examples provided by the website
+    /// show the `message` attribute filled with
+    /// the value `success`, we might assume, that
+    /// it would differ in error scenarios.
     pub fn message(&self) -> &str {
         self.message.as_str()
     }
     
+    /// Returns the number of people in space.
+    ///
+    /// This is redundant information provided
+    /// by the data provider, which could be deduced
+    /// from the number of elements contained in the
+    /// `people` field.
+    ///
+    /// There is a possibility, that the result of
+    /// `number()` is not equal to `people().len()`.
     pub fn number(&self) -> i32 {
         self.number
     }
 
+    /// Returns a reference to the list of `People`
+    /// in space.
     pub fn people(&self) -> &Vec<Person> {
         &self.people
     }
@@ -70,18 +112,30 @@ pub struct IssNow {
 }
 
 impl IssNow {
+
+    /// Returns the value of the `message` field.
+    ///
+    /// Since all examples provided by the website
+    /// show the `message` attribute filled with
+    /// the value `success`, we might assume, that
+    /// it would differ in error scenarios.
     pub fn message(&self) -> &str {
         self.message.as_str()
     }
 
+    /// Returns the time in form of a unix timestamp
+    /// when the latitude and longitude information
+    /// was captured.
     pub fn timestamp(&self) -> i64 {
         self.timestamp
     }
 
+    /// Latitude of the ISS
     pub fn latitude(&self) -> &str {
         &self.iss_position.latitude.as_str()
     }
 
+    /// Longitude of the ISS
     pub fn longitude(&self) -> &str {
         &self.iss_position.longitude.as_str()
     }
