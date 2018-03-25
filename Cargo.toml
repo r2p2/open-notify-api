@@ -1,7 +1,11 @@
 [package]
 name = "open-notify-api"
 version = "0.1.0"
+description = "Crate to access data provided by http://open-notify.org/"
+repository = "https://github.com/r2p2/open-notify-api"
+
 authors = ["Robert Peters <r2p2.gw@gmail.com>"]
+license = "GPL-3.0"
 
 [dependencies]
 serde = "1.0.34"
