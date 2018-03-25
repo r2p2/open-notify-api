@@ -1,3 +1,6 @@
+//! Ruby library to access the web api provided by http://open-notify.org/ (CC BY 3.0 Nathan Bergey).
+
+
 extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
@@ -30,6 +33,7 @@ impl Person {
     }
 }
 
+/// Structure containing astronouts in space.
 #[derive(Deserialize, Serialize)]
 pub struct Astros {
     message: String,
@@ -41,7 +45,7 @@ impl Astros {
     pub fn message(&self) -> &str {
         self.message.as_str()
     }
-
+    
     pub fn number(&self) -> i32 {
         self.number
     }
@@ -57,6 +61,7 @@ struct IssPosition {
     longitude: String,
 }
 
+/// Structure containing the location of the ISS.
 #[derive(Deserialize, Serialize)]
 pub struct IssNow {
     message: String,
@@ -82,7 +87,7 @@ impl IssNow {
     }
 }
 
-
+/// Fetch astronouts currently in space.
 pub fn astros() -> Result<Astros, error::OpenNotificationError> {
     astro_from_json(&reqwest::get("http://api.open-notify.org/astros.json")?.text()?)
 }
@@ -92,6 +97,7 @@ fn astro_from_json(data: &str) -> Result<Astros, error::OpenNotificationError> {
     Ok(astros)
 }
 
+/// Fetch current ISS position.
 pub fn iss_now() -> Result<IssNow, error::OpenNotificationError> {
     iss_now_from_json(&reqwest::get("http://api.open-notify.org/iss-now.json")?.text()?)
 }
