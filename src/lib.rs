@@ -32,7 +32,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-mod error;
+pub mod error;
 
 /// People are contained in a separate type `Person`
 /// to add the information in which craft they are in.
@@ -78,19 +78,6 @@ impl Astros {
         self.message.as_str()
     }
     
-    /// Returns the number of people in space.
-    ///
-    /// This is redundant information provided
-    /// by the data provider, which could be deduced
-    /// from the number of elements contained in the
-    /// `people` field.
-    ///
-    /// There is a possibility, that the result of
-    /// `number()` is not equal to `people().len()`.
-    pub fn number(&self) -> i32 {
-        self.number
-    }
-
     /// Returns a reference to the list of `People`
     /// in space.
     pub fn people(&self) -> &Vec<Person> {
@@ -149,6 +136,17 @@ pub fn astros() -> Result<Astros, error::OpenNotificationError> {
 
 fn astro_from_json(data: &str) -> Result<Astros, error::OpenNotificationError> {
     let astros: Astros = serde_json::from_str(data)?;
+
+    if astros.number as usize != astros.people.len() {
+        return Err(error::OpenNotificationError::Data(String::from(
+            "attribute 'number' does not match length of people field")));
+    }
+
+    if astros.message() != "success" {
+        return Err(error::OpenNotificationError::Data(String::from(
+            format!("attribute message indicates no success but {}", astros.message))));
+    }
+
     Ok(astros)
 }
 
@@ -159,6 +157,12 @@ pub fn iss_now() -> Result<IssNow, error::OpenNotificationError> {
 
 fn iss_now_from_json(data: &str) -> Result<IssNow, error::OpenNotificationError> {
     let iss_now: IssNow = serde_json::from_str(data)?;
+
+    if iss_now.message() != "success" {
+        return Err(error::OpenNotificationError::Data(String::from(
+            format!("attribute message indicates no success but {}", iss_now.message))));
+    }
+
     Ok(iss_now)
 }
 
@@ -191,7 +195,6 @@ mod tests {
 
         if let Ok(astros) = astro_from_json(input_data) {
             assert_eq!(astros.message(), "success");
-            assert_eq!(astros.number(), 6);
             assert_eq!(astros.people().len(), 6);
             for person in expected_people.iter() {
                 assert!(astros.people().contains(&person));
@@ -202,7 +205,7 @@ mod tests {
     }
 
     #[test]
-    fn astro_parse_faulty_data() {
+    fn astro_parse_missing_data() {
         let input_data = r#"{
             "message": "success",
             "number": 6,
@@ -215,10 +218,52 @@ mod tests {
             {"name": "Richard Arnold", "craft": "Soyuz MS-08"}]
             }"#;
 
-        if let Err(_) = astro_from_json(input_data) {
-            assert!(true);
-        } else {
-            assert!(false);
+        match astro_from_json(input_data) {
+            Err(error::OpenNotificationError::Parsing(_)) => assert!(true),
+            Err(_) => assert!(false),
+            Ok(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn astro_parse_inconsistent_data() {
+        let input_data = r#"{
+            "message": "success",
+            "number": 5,
+            "people": [
+            {"name": "Anton Shkaplerov", "craft": "ISS"},
+            {"name": "Scott Tingle", "craft": "ISS"},
+            {"name": "Norishige Kanai", "craft": "ISS"},
+            {"name": "Oleg Artemyev", "craft": "Soyuz MS-08"},
+            {"name": "Andrew Feustel", "craft": "Soyuz MS-08"},
+            {"name": "Richard Arnold", "craft": "Soyuz MS-08"}]
+            }"#;
+
+        match astro_from_json(input_data) {
+            Err(error::OpenNotificationError::Data(_)) => assert!(true),
+            Err(_) => assert!(false),
+            Ok(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn astro_parse_unsuccessfull_data() {
+        let input_data = r#"{
+            "message": "unsuccess",
+            "number": 6,
+            "people": [
+            {"name": "Anton Shkaplerov", "craft": "ISS"},
+            {"name": "Scott Tingle", "craft": "ISS"},
+            {"name": "Norishige Kanai", "craft": "ISS"},
+            {"name": "Oleg Artemyev", "craft": "Soyuz MS-08"},
+            {"name": "Andrew Feustel", "craft": "Soyuz MS-08"},
+            {"name": "Richard Arnold", "craft": "Soyuz MS-08"}]
+            }"#;
+
+        match astro_from_json(input_data) {
+            Err(error::OpenNotificationError::Data(_)) => assert!(true),
+            Err(_) => assert!(false),
+            Ok(_) => assert!(false),
         }
     }
 

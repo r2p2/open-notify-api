@@ -3,8 +3,13 @@ use serde_json;
 
 #[derive(Debug)]
 pub enum OpenNotificationError {
+    /// Something went wrong while fetching the data.
     Network(reqwest::Error),
+
+    /// Unexpected message structure.
     Parsing(serde_json::Error),
+
+    /// Unexpected or inconsistent information is detected.
     Data(String),
 }
 
