@@ -1,4 +1,5 @@
-//! Ruby library to access the web api provided by http://open-notify.org/.
+//! Ruby library to access the web api provided by
+//! [open-notify.org](http://open-notify.org/).
 //!
 //! # Supported
 //!
@@ -132,12 +133,12 @@ impl IssNow {
 
     /// Latitude of the ISS
     pub fn latitude(&self) -> &str {
-        &self.iss_position.latitude.as_str()
+        self.iss_position.latitude.as_str()
     }
 
     /// Longitude of the ISS
     pub fn longitude(&self) -> &str {
-        &self.iss_position.longitude.as_str()
+        self.iss_position.longitude.as_str()
     }
 }
 
