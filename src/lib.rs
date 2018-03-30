@@ -77,7 +77,7 @@ impl Astros {
     pub fn message(&self) -> &str {
         self.message.as_str()
     }
-    
+
     /// Returns a reference to the list of `People`
     /// in space.
     pub fn people(&self) -> &Vec<Person> {
@@ -100,7 +100,6 @@ pub struct IssNow {
 }
 
 impl IssNow {
-
     /// Returns the value of the `message` field.
     ///
     /// Since all examples provided by the website
@@ -139,12 +138,15 @@ fn astro_from_json(data: &str) -> Result<Astros, error::OpenNotificationError> {
 
     if astros.number as usize != astros.people.len() {
         return Err(error::OpenNotificationError::Data(String::from(
-            "attribute 'number' does not match length of people field")));
+            "attribute 'number' does not match length of people field",
+        )));
     }
 
     if astros.message() != "success" {
-        return Err(error::OpenNotificationError::Data(String::from(
-            format!("attribute message indicates no success but {}", astros.message))));
+        return Err(error::OpenNotificationError::Data(format!(
+            "attribute message indicates no success but {}",
+            astros.message
+        )));
     }
 
     Ok(astros)
@@ -159,8 +161,10 @@ fn iss_now_from_json(data: &str) -> Result<IssNow, error::OpenNotificationError>
     let iss_now: IssNow = serde_json::from_str(data)?;
 
     if iss_now.message() != "success" {
-        return Err(error::OpenNotificationError::Data(String::from(
-            format!("attribute message indicates no success but {}", iss_now.message))));
+        return Err(error::OpenNotificationError::Data(format!(
+            "attribute message indicates no success but {}",
+            iss_now.message
+        )));
     }
 
     Ok(iss_now)
@@ -278,8 +282,7 @@ mod tests {
             assert_eq!(iss_now.timestamp(), 1521971230);
             assert_eq!(iss_now.latitude(), "-34.6445");
             assert_eq!(iss_now.longitude(), "73.5964");
-        }
-        else {
+        } else {
             assert!(false);
         }
     }
