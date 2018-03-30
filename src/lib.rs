@@ -63,21 +63,15 @@ impl Person {
 #[derive(Deserialize, Serialize)]
 pub struct Astros {
     message: String,
+    #[serde(default)]
+    reason: String,
+    #[serde(default)]
     number: i32,
+    #[serde(default)]
     people: Vec<Person>,
 }
 
 impl Astros {
-    /// Returns the value of the `message` field.
-    ///
-    /// Since all examples provided by the website
-    /// show the `message` attribute filled with
-    /// the value `success`, we might assume, that
-    /// it would differ in error scenarios.
-    pub fn message(&self) -> &str {
-        self.message.as_str()
-    }
-
     /// Returns a reference to the list of `People`
     /// in space.
     pub fn people(&self) -> &Vec<Person> {
@@ -85,31 +79,25 @@ impl Astros {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 struct IssPosition {
-    latitude: String,
-    longitude: String,
+    latitude: f32,
+    longitude: f32,
 }
 
 /// Structure containing the location of the ISS.
 #[derive(Deserialize, Serialize)]
 pub struct IssNow {
     message: String,
+    #[serde(default)]
+    reason: String,
+    #[serde(default)]
     timestamp: i64,
+    #[serde(default)]
     iss_position: IssPosition,
 }
 
 impl IssNow {
-    /// Returns the value of the `message` field.
-    ///
-    /// Since all examples provided by the website
-    /// show the `message` attribute filled with
-    /// the value `success`, we might assume, that
-    /// it would differ in error scenarios.
-    pub fn message(&self) -> &str {
-        self.message.as_str()
-    }
-
     /// Returns the time in form of a unix timestamp
     /// when the latitude and longitude information
     /// was captured.
@@ -118,13 +106,13 @@ impl IssNow {
     }
 
     /// Latitude of the ISS
-    pub fn latitude(&self) -> &str {
-        self.iss_position.latitude.as_str()
+    pub fn latitude(&self) -> f32 {
+        self.iss_position.latitude
     }
 
     /// Longitude of the ISS
-    pub fn longitude(&self) -> &str {
-        self.iss_position.longitude.as_str()
+    pub fn longitude(&self) -> f32 {
+        self.iss_position.longitude
     }
 }
 
@@ -142,11 +130,8 @@ fn astro_from_json(data: &str) -> Result<Astros, error::OpenNotificationError> {
         )));
     }
 
-    if astros.message() != "success" {
-        return Err(error::OpenNotificationError::Data(format!(
-            "attribute message indicates no success but {}",
-            astros.message
-        )));
+    if astros.message != "success" {
+        return Err(error::OpenNotificationError::Data(astros.reason));
     }
 
     Ok(astros)
@@ -160,11 +145,8 @@ pub fn iss_now() -> Result<IssNow, error::OpenNotificationError> {
 fn iss_now_from_json(data: &str) -> Result<IssNow, error::OpenNotificationError> {
     let iss_now: IssNow = serde_json::from_str(data)?;
 
-    if iss_now.message() != "success" {
-        return Err(error::OpenNotificationError::Data(format!(
-            "attribute message indicates no success but {}",
-            iss_now.message
-        )));
+    if iss_now.message != "success" {
+        return Err(error::OpenNotificationError::Data(iss_now.reason));
     }
 
     Ok(iss_now)
@@ -280,7 +262,6 @@ mod tests {
         ];
 
         if let Ok(astros) = astro_from_json(input_data) {
-            assert_eq!(astros.message(), "success");
             assert_eq!(astros.people().len(), 6);
             for person in expected_people.iter() {
                 assert!(astros.people().contains(&person));
@@ -335,19 +316,13 @@ mod tests {
     #[test]
     fn astro_parse_unsuccessfull_data() {
         let input_data = r#"{
-            "message": "unsuccess",
-            "number": 6,
-            "people": [
-            {"name": "Anton Shkaplerov", "craft": "ISS"},
-            {"name": "Scott Tingle", "craft": "ISS"},
-            {"name": "Norishige Kanai", "craft": "ISS"},
-            {"name": "Oleg Artemyev", "craft": "Soyuz MS-08"},
-            {"name": "Andrew Feustel", "craft": "Soyuz MS-08"},
-            {"name": "Richard Arnold", "craft": "Soyuz MS-08"}]
+            "message": "failure",
+            "reason": "something went wrong"
             }"#;
 
+        use error::OpenNotificationError::Data;
         match astro_from_json(input_data) {
-            Err(error::OpenNotificationError::Data(_)) => assert!(true),
+            Err(Data(msg)) => assert_eq!(msg, "something went wrong"),
             Err(_) => assert!(false),
             Ok(_) => assert!(false),
         }
@@ -356,16 +331,30 @@ mod tests {
     #[test]
     fn iss_now_parse_successful_data() {
         let input_data = r#"{
-            "iss_position": {"longitude": "73.5964", "latitude": "-34.6445"},
+            "iss_position": {"longitude": 73.5964, "latitude": -34.6445},
             "message": "success",
             "timestamp": 1521971230}"#;
         if let Ok(iss_now) = iss_now_from_json(input_data) {
-            assert_eq!(iss_now.message(), "success");
             assert_eq!(iss_now.timestamp(), 1521971230);
-            assert_eq!(iss_now.latitude(), "-34.6445");
-            assert_eq!(iss_now.longitude(), "73.5964");
+            assert_eq!(iss_now.latitude(), -34.6445);
+            assert_eq!(iss_now.longitude(), 73.5964);
         } else {
             assert!(false);
+        }
+    }
+
+    #[test]
+    fn iss_now_parse_unsuccessfull_data() {
+        let input_data = r#"{
+            "message": "failure",
+            "reason": "something went wrong"
+            }"#;
+
+        use error::OpenNotificationError::Data;
+        match iss_now_from_json(input_data) {
+            Err(Data(msg)) => assert_eq!(msg, "something went wrong"),
+            Err(_) => assert!(false),
+            Ok(_) => assert!(false),
         }
     }
 }
