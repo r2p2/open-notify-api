@@ -1,6 +1,6 @@
 [package]
 name = "open-notify-api"
-version = "0.1.0"
+version = "0.2.0"
 description = "Crate to access data provided by http://open-notify.org/"
 repository = "https://github.com/r2p2/open-notify-api"
 
