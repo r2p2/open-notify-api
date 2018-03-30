@@ -170,6 +170,88 @@ fn iss_now_from_json(data: &str) -> Result<IssNow, error::OpenNotificationError>
     Ok(iss_now)
 }
 
+#[derive(Default, Deserialize, Serialize)]
+struct IssPassTimesRequest {
+    latitude: f32,
+    longitude: f32,
+    altitude: f32,
+    passes: u32,
+    datetime: i64,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct IssPassTime {
+    risetime: i64,
+    duration: i64,
+}
+
+impl IssPassTime {
+    pub fn rise(&self) -> i64 {
+        self.risetime
+    }
+
+    pub fn duration(&self) -> i64 {
+        self.duration
+    }
+}
+
+/// Structure containing the location of the ISS.
+#[derive(Deserialize, Serialize)]
+pub struct IssPassTimes {
+    message: String,
+    #[serde(default)]
+    reason: String,
+    #[serde(default)]
+    request: IssPassTimesRequest,
+    #[serde(default)]
+    response: Vec<IssPassTime>,
+}
+
+impl IssPassTimes {
+    pub fn passes(&self) -> &[IssPassTime] {
+        &self.response
+    }
+}
+
+/// Request ISS pass times over a specified location
+///
+/// # Parameters
+/// * `lat` -80 to 80 in degrees
+/// * `lon` -180 to 180 in degrees
+/// * `alt` 0 to 10000 in meters
+/// * `n` 1 to 100; How many passes shall be included in the result.
+///
+/// # Example
+/// ```rust
+/// use open_notify_api as ona;
+/// if let Ok(reply) = ona::iss_pass_times(52.5, 13.4, 10.0, 5) {
+///     assert_eq!(reply.passes().len(), 5);
+/// }
+/// ```
+pub fn iss_pass_times(
+    lat: f32,
+    lon: f32,
+    alt: f32,
+    n: u32,
+) -> Result<IssPassTimes, error::OpenNotificationError> {
+    iss_pass_times_from_json(&reqwest::get(
+        format!(
+            "http://api.open-notify.org/iss-pass.json?lat={}&lon={}&alt={}&n={}",
+            lat, lon, alt, n,
+        ).as_str(),
+    )?.text()?)
+}
+
+fn iss_pass_times_from_json(data: &str) -> Result<IssPassTimes, error::OpenNotificationError> {
+    let iss_pass_times: IssPassTimes = serde_json::from_str(data)?;
+
+    if iss_pass_times.message != "success" {
+        return Err(error::OpenNotificationError::Data(iss_pass_times.reason));
+    }
+
+    Ok(iss_pass_times)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

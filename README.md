@@ -1,11 +1,12 @@
+[![Build Status](https://travis-ci.org/r2p2/open-notify-api.svg?branch=master)](https://travis-ci.org/r2p2/open-notify-api)
 # open-notify-api
 > Rust library to access data provided by http://open-notify.org/
-[![Build Status](https://travis-ci.org/r2p2/open-notify-api.svg?branch=master)](https://travis-ci.org/r2p2/open-notify-api)
 
 ## Supported apis
 
 * *astro* Shows who is in space right now
 * *iss_now* Shows ISS location right now
+* *iss_pass_times* Show ISS pass times over a specified location
 
 ## Links
 
